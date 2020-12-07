@@ -5,9 +5,9 @@ from secrets import token_urlsafe
 
 OAUTH2_CLIENT_ID = os.environ['OAUTH2_CLIENT_ID']
 OAUTH2_CLIENT_SECRET = os.environ['OAUTH2_CLIENT_SECRET']
-OAUTH2_REDIRECT_URI = 'http://20.43.17.201/callback'
+OAUTH2_REDIRECT_URI = 'http://20.43.17.201:5000/callback'
 
-API_BASE_URL = os.environ.get('API_BASE_URL', 'https://discord.com/api')
+API_BASE_URL = os.environ.get('API_BASE_URL', 'https://discord.com/api/v8')
 AUTHORIZATION_BASE_URL = API_BASE_URL + '/oauth2/authorize'
 TOKEN_URL = API_BASE_URL + '/oauth2/token'
 
@@ -24,7 +24,7 @@ def token_updater(token):
     session['oauth2_token'] = token
 
 
-def make_session(token=None, state=None, scope=None) -> OAuth2Session:
+def make_session(token: str = None, state: str = None, scope=None) -> OAuth2Session:
     return OAuth2Session(
         client_id=OAUTH2_CLIENT_ID,
         token=token,
@@ -64,8 +64,8 @@ def callback():
                            token=request.args.get('code'))
     token = discord.fetch_token(
         TOKEN_URL,
-        client_secret=OAUTH2_CLIENT_SECRET,
-        authorization_response=request.url)
+        code=request.args.get('code'),
+        client_secret=OAUTH2_CLIENT_SECRET)
     session['oauth2_token'] = token
     return redirect(url_for('.me'))
 
