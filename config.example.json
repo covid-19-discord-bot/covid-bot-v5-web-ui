@@ -1,0 +1,7 @@
+{
+  "oauth2": {
+    "client_id": 111111111111111111,
+    "client_secret": "",
+    "redirect_uri": "https://localhost:8000/callback"
+  }
+}

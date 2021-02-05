@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+        <div class="d-flex flex-column" id="content-wrapper" style="width: 100%;">
+            <div id="content">
+                <div class="container-fluid" style="color: var(--white);">
+                    <div class="text-center d-sm-flex justify-content-between align-items-center mb-4" style="padding-top: 3.5%;color: var(--white);">
+                        <h1 class="text-center text-light mb-0" style="color: var(--white);">COVID-19 Bot</h1>
+                    </div>
+                    <div class="row row-cols-2">
+                        <div class="col">
+                            <h2 class="text-light">Features</h2>
+                            <ul class="text-light">
+                                <li>A auto-updater to send updates on a country every amount of time. See /help autoupdate for details.<br></li>
+                                <li>Global, Country, and Province stats (/covid country alone for global, /covid country &lt;country&gt; for stats on &lt;country&gt;, and /covid province &lt;country&gt;; &lt;province&gt; for stats on &lt;province&gt; in &lt;country&gt;! For stats on American States, check out /covid state &lt;name&gt; for stats in &lt;name&gt;!<br></li>
+                                <li>Maps! See a global, high-quality map for a lot of stuff, like total cases! See /maps for details.<br></li>
+                                <li>Vaccine stats! Get details on the latest vaccine candidates without leaving Discord! See /vaccine for details.<br></li>
+                                <li>And much more!</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h2 class="text-light">Features Coming Soon</h2>
+                            <ul class="text-light">
+                                <li>Graphs</li>
+                                <li>Historical Data</li>
+                                <li>Future Simulations</li>
+                                <li>COVID-19 News</li>
+                                <li>COVID-19 Minigames</li>
+                                <li>Customized Autoupdates</li>
+                                <li>Autoupdates for everything, from the world, to states, to maps, and even more!</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h2 class="text-light">FAQ</h2>
+                            <div role="tablist" id="accordion-1">
+                                <div class="card">
+                                    <div class="card-header" role="tab">
+                                        <h5 class="mb-0"><a data-toggle="collapse" aria-expanded="false" aria-controls="accordion-1 .item-1" href="#accordion-1 .item-1">How can I get started quickly?</a></h5>
+                                    </div>
+                                    <div class="collapse item-1" role="tabpanel" data-parent="#accordion-1">
+                                        <div class="card-body">
+                                            <p class="card-text">Most users like doing a autoupdate for the world, once daily, so start with that! Type the following into the channel you want to do a update in:&nbsp;&nbsp;</p><code>/autoupdate world 1d</code>
+                                            <p>The bot will now send a update for the world, once daily. If you'd like to force it to update at a specific time, run the following command:</p><code>/autoupdate update_at &lt;time&gt;</code>
+                                            <p>Replace &lt;time&gt; with a UTC time when you want a update at. It MUST be a UTC time, as that's what timezone the bot works in! For example, the following command will do a update at 23:59 UTC:&nbsp;</p><code>/autoupdate update_at 23:59</code>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header" role="tab">
+                                        <h5 class="mb-0"><a data-toggle="collapse" aria-expanded="false" aria-controls="accordion-1 .item-2" href="#accordion-1 .item-2">What's up with this website? Why don't buttons work?</a></h5>
+                                    </div>
+                                    <div class="collapse item-2" role="tabpanel" data-parent="#accordion-1">
+                                        <div class="card-body">
+                                            <p class="card-text">The web UI is coming shortly! Keep a eye on this site, and join the support server for updates!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header" role="tab">
+                                        <h5 class="mb-0"><a data-toggle="collapse" aria-expanded="false" aria-controls="accordion-1 .item-3" href="#accordion-1 .item-3">I want more help!</a></h5>
+                                    </div>
+                                    <div class="collapse item-3" role="tabpanel" data-parent="#accordion-1">
+                                        <div class="card-body">
+                                            <p class="card-text">Sure! Click the support server invite at the top of the page, head over to #support, ask your question, and be sure to ping the @Support role for a quicker response!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h2 class="text-light">Get Started</h2>
+                            <section style="margin-bottom: 16px;"><a class="btn btn-outline-primary btn-block btn-lg" role="button" href="/invite">Invite The Bot</a></section>
+                            <section style="margin-bottom: 16px;"><a class="btn btn-outline-primary btn-block btn-lg" role="button" href="https://discord.gg/ZD3zB3w" target="_blank">Get Support</a></section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock content %}
