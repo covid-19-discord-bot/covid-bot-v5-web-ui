@@ -1,32 +1,18 @@
 import json
 import os
-from secrets import token_urlsafe
 from typing import Optional
-
+import logging
 import requests
 from flask import Flask, session, redirect, request, url_for, render_template, flash, abort
 from requests import Response
 from requests_oauthlib import OAuth2Session
 
+logging.basicConfig(format='%(asctime)s -  %(levelname)s -  %(message)s')
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 app = Flask(__name__)
 app.debug = True
-
-
-class InvalidUsage(Exception):
-    status_code = 400
-
-    def __init__(self, message, status_code=None, payload=None):
-        super().__init__(self)
-        self.message = message
-        if status_code is not None:
-            self.status_code = status_code
-        self.payload = payload
-
-    def to_dict(self):
-        rv = dict(self.payload or ())
-        rv['message'] = self.message
-        return rv
-
 
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -39,6 +25,7 @@ if "http://" in config["oauth2"]["redirect_uri"]:
 client_id = config["oauth2"]["client_id"]
 client_secret = config["oauth2"]["client_secret"]
 redirect_uri = config["oauth2"]["redirect_uri"]
+bot_token = config["discord_bot"]["token"]
 discord_api_base_url = "https://discord.com/api"
 authorization_base_url = discord_api_base_url + '/oauth2/authorize'
 token_url = discord_api_base_url + '/oauth2/token'
@@ -66,7 +53,7 @@ def exchange_code(code):
         'grant_type': 'authorization_code',
         'code': code,
         'redirect_uri': redirect_uri,
-        'scope': 'identify guilds'
+        'scope': 'identify guilds guilds.join'
     }
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -118,13 +105,18 @@ def invite():
 
 
 @app.errorhandler(404)
-def http_404():
+def http_404(_):
     return render_template("404.html")
 
 
 @app.errorhandler(403)
-def http_403():
+def http_403(_):
     return render_template("403.html")
+
+
+@app.errorhandler(500)
+def http_500(_):
+    return render_template("500.html")
 
 
 @app.route('/login')
@@ -134,7 +126,7 @@ def login():
         flash("You were logged out successfully.")  # to keep users from being confused flash a logout msg
         return redirect("/")  # redirect home after deleting the session's OAuth2 token
     else:
-        discord = make_session(scope=["identify", "guilds"])
+        discord = make_session(scope=["identify", "guilds", "guilds.join"])
         authorization_url, state = discord.authorization_url(authorization_base_url)
         session['oauth2_state'] = state
         return redirect(authorization_url)
@@ -147,11 +139,27 @@ def oauth_callback():
                f"Click <a href=\"{url_for('.login')}\">here</a> to try again."
     discord = make_session(state=session.get('oauth2_state'), token=request.values.get('code'))
     token = discord.fetch_token(
-        token_url,
+        include_client_id=True,
+        token_url=token_url,
         client_secret=client_secret,
+        client_id=client_id,
         code=request.args.get("code"))
     session['oauth2_token'] = token
     return redirect(url_for(".dashboard"))
+
+
+@app.route("/join_support_server")
+def join_support_server():
+    if not session.get("oauth2_token"):
+        return redirect(url_for(".login"))
+    discord = make_session(token=session.get("oauth2_token"))
+    user = discord.get(discord_api_base_url + '/users/@me').json()
+    r = requests.put(discord_api_base_url + f"/guilds/675390855716274216/members/{user['id']}",
+                     json={"access_token": discord.token["access_token"]},
+                     headers={"Authorization": f"Bot {bot_token}",
+                              "Content-Type": "application/json"})
+    r.raise_for_status()
+    return "Added you to the bot's support server. Go check out Discord!"
 
 
 @app.route('/me')
@@ -186,7 +194,8 @@ def dashboard():
     user, guilds = get_user_and_guilds(session.get('oauth2_token'))
     guild_list = []
     for guild in guilds:
-        guild_list.append(str(guild["id"]))
+        if guild["owner"] or (int(guild["permissions"]) & 0x20) == 0x20:
+            guild_list.append(str(guild["id"]))
     try:
         accessible_guilds_request = bot_api_request(f"protected/bot_is_in_servers/{'-'.join(guild_list)}")
         accessible_guilds_request.raise_for_status()
@@ -210,7 +219,7 @@ def dashboard():
                            channel_count=channel_count, username=user['username'])
 
 
-@app.route("/manage/<guild_id:int>")
+@app.route("/manage/<int:guild_id>/")
 def manage_guild(guild_id):
     if not session.get("oauth2_token"):  # force the user to log in if they aren't already
         return redirect(url_for(".login"))
@@ -224,6 +233,33 @@ def manage_guild(guild_id):
         abort(404)
     # we now know the bot is in this guild
     # time to check if the user is in guild and has perms
+    user, guilds = get_user_and_guilds(session.get('oauth2_token'))
+    for guild in filter(lambda x: int(x["id"]) == guild_id, guilds):
+        if guild["owner"] or (int(guild["permissions"]) & 0x20) == 0x20:
+            break
+    else:
+        abort(403)  # no perms buddy
+
+    try:
+        guild_data_request = bot_api_request(f"protected/guild_info/{guild_id}/{user['id']}")
+        guild_data_request.raise_for_status()
+        guild_data = guild_data_request.json()
+    except requests.exceptions.ConnectionError:
+        abort(500)
+    except requests.exceptions.RequestException:
+        abort(500)
+    except TimeoutError:
+        abort(500)
+    print(guild_data)
+    return render_template("guild_manage.html", guild=guild, total_updaters="unknown", enabled_channels="unknown",
+                           used_credits=guild_data.get("used_credits", "unknown"),
+                           avail_credits=guild_data.get("available_credits", "unknown"),
+                           channels=guild_data.get("channels", []))
+
+
+@app.route("/throw_error/<int:code>")
+def throw_exception(code):
+    abort(code)
 
 
 if __name__ == '__main__':
